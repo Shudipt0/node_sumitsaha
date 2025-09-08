@@ -1,5 +1,10 @@
 {
+  "scripts": {
+    "start": "cross-env NODE_ENV=staging nodemon index",
+    "production": "cross-env NODE_ENV=production nodemon index"
+  },
   "devDependencies": {
+    "cross-env": "^10.0.0",
     "eslint": "8.2.0",
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-config-prettier": "^10.1.8",
@@ -9,5 +14,21 @@
   },
   "dependencies": {
     "lodash": "^4.17.21"
-  }
+  },
+  "name": "node_sumitsaha",
+  "version": "1.0.0",
+  "description": "��#\u0000 \u0000n\u0000o\u0000d\u0000e\u0000_\u0000s\u0000u\u0000m\u0000i\u0000t\u0000s\u0000a\u0000h\u0000a\u0000\r\u0000 \u0000",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shudipt0/node_sumitsaha.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Shudipt0/node_sumitsaha/issues"
+  },
+  "homepage": "https://github.com/Shudipt0/node_sumitsaha#readme"
 }
