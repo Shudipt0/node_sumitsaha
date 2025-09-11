@@ -6,8 +6,9 @@
 //  dependencies
 const data = require("../../lib/data");
 const { hash } = require("../../helpers/utilities");
-const { parseJSON } = require("../../helpers/utilities");
+const { parseJSON, createRandomString } = require("../../helpers/utilities");
 const tokenHandler = require("./tokenHandler");
+const { maxChecks } = require("../../helpers/environments");
 
 // module scaffolding
 const handler = {};
@@ -59,6 +60,86 @@ handler._check.post = (requestProperties, callback) => {
       : false;
 
   if (protocol && url && method && successCodes && timeoutSeconds) {
+    // verify the user
+    const token =
+      typeof requestProperties.headerObject.token === "string"
+        ? requestProperties.headerObject.token
+        : false;
+
+    // lookup the user phone by reading the token
+    data.read("tokens", token, (err, tokenData) => {
+      if (!err && tokenData) {
+        let userPhone = parseJSON(tokenData).phone;
+        //  lookup the user data
+        data.read("users", userPhone, (err2, userData) => {
+          if (!err2 && userData) {
+            tokenHandler._token.verify(token, userPhone, (tokenIsValid) => {
+              if (tokenIsValid) {
+                let userObject = parseJSON(userData);
+                let userChecks =
+                  typeof userObject.checks === "object" &&
+                  userObject.checks instanceof Array
+                    ? userObject.checks
+                    : [];
+
+                if (userChecks.length < maxChecks) {
+                  let checkId = createRandomString(20);
+                  const checkObject = {
+                    id: checkId,
+                    userPhone,
+                    protocol,
+                    url,
+                    method,
+                    successCodes,
+                    timeoutSeconds,
+                  };
+                  // save the object
+                  data.create("checks", checkId, checkObject, (err3) => {
+                    if (!err3) {
+                      // add check id to the users object
+                      userObject.checks = userChecks;
+                      userObject.checks.push(checkId);
+
+                      // save the new user data
+                      data.update("users", userPhone, userObject, (err4) => {
+                        if (!err4) {
+                          // return the data about the new check
+                          callback(200, checkObject);
+                        } else {
+                          callback(500, {
+                            error: "There was a problem in the server side!",
+                          });
+                        }
+                      });
+                    } else {
+                      callback(500, {
+                        error: "There was a problem in the server side!",
+                      });
+                    }
+                  });
+                } else {
+                  callback(403, {
+                    error: "User has already reached max check limit!",
+                  });
+                }
+              } else {
+                callback(403, {
+                  error: "Authentication problem!",
+                });
+              }
+            });
+          } else {
+            callback(403, {
+              error: "User not found!",
+            });
+          }
+        });
+      } else {
+        callback(403, {
+          error: "Authentication problem!",
+        });
+      }
+    });
   } else {
     callback(400, {
       error: "You have a problem in your request!",
